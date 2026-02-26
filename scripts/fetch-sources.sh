@@ -18,7 +18,7 @@ ZIG_VER="${ZIG_VER:-0.15.2}"
 declare -A URLS=(
   ["openssh-${OPENSSH_VER}.tar.gz"]="https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VER}.tar.gz"
   ["openssl-${OPENSSL_VER}.tar.gz"]="https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VER}/openssl-${OPENSSL_VER}.tar.gz"
-  ["zlib-${ZLIB_VER}.tar.gz"]="https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.gz"
+  ["zlib-${ZLIB_VER}.tar.gz"]="https://zlib.net/current/zlib.tar.gz"
   ["zig-x86_64-linux-${ZIG_VER}.tar.xz"]="https://ziglang.org/download/${ZIG_VER}/zig-x86_64-linux-${ZIG_VER}.tar.xz"
 )
 
