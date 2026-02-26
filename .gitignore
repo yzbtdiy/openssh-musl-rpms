@@ -1,0 +1,32 @@
+# Downloaded source tarballs (fetched by make fetch / scripts/fetch-sources.sh)
+SOURCES/*.tar.gz
+SOURCES/*.tar.xz
+
+# Do NOT ignore the committed checksums file and config files
+!SOURCES/checksums.sha256
+!SOURCES/sshd.service
+!SOURCES/sshd_config
+!SOURCES/ssh_config
+
+# Build output
+output/
+~/rpmbuild/
+
+# Zig build cache
+.zig-cache/
+zig-out/
+
+# rpmbuild intermediate dirs (if building in-tree)
+BUILD/
+BUILDROOT/
+RPMS/
+SRPMS/
+*.rpm
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

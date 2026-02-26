@@ -1,0 +1,49 @@
+# sshd_config — OpenSSH daemon configuration
+# Static musl build: PAM disabled, key/certificate auth only.
+# See sshd_config(5) for full documentation.
+
+# ── Network ────────────────────────────────────────────────────────────────────
+Port 22
+AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+
+# ── Host Keys ──────────────────────────────────────────────────────────────────
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# ── Authentication ─────────────────────────────────────────────────────────────
+LoginGraceTime 60
+PermitRootLogin prohibit-password
+StrictModes yes
+MaxAuthTries 4
+MaxSessions 10
+
+# Public-key / certificate authentication (only auth methods enabled)
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+# Explicitly disable all password-based methods
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# PAM is not available in this static build
+UsePAM no
+
+# ── Forwarding ─────────────────────────────────────────────────────────────────
+AllowAgentForwarding yes
+AllowTcpForwarding yes
+GatewayPorts no
+X11Forwarding no
+
+# ── Session ────────────────────────────────────────────────────────────────────
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/libexec/openssh/sftp-server
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+SyslogFacility AUTH
+LogLevel INFO

@@ -1,0 +1,227 @@
+name: Release (tag → GitHub Releases)
+
+# Trigger: push a tag matching v{openssh_ver}-{rpm_release}
+# Example:   git tag v9.9p2-1 && git push origin v9.9p2-1
+#
+# Publishes 6 RPMs:
+#   openssh-{ver}-{rel}.x86_64.rpm
+#   openssh-clients-{ver}-{rel}.x86_64.rpm
+#   openssh-server-{ver}-{rel}.x86_64.rpm
+#   openssh-{ver}-{rel}.aarch64.rpm
+#   openssh-clients-{ver}-{rel}.aarch64.rpm
+#   openssh-server-{ver}-{rel}.aarch64.rpm
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # required to create GitHub Releases and upload assets
+
+# ── Dependency version pins (not derived from tag) ────────────────────────────
+env:
+  OPENSSL_VER: "3.5.0"
+  ZLIB_VER:    "1.3.1"
+  ZIG_VER:     "0.15.2"
+
+jobs:
+  # ── Parse the tag into OPENSSH_VER + RPM_RELEASE ─────────────────────────────
+  parse-tag:
+    name: Parse release tag
+    runs-on: ubuntu-latest
+    outputs:
+      openssh_ver: ${{ steps.parse.outputs.openssh_ver }}
+      rpm_release: ${{ steps.parse.outputs.rpm_release }}
+      tag_name:    ${{ steps.parse.outputs.tag_name }}
+    steps:
+      - name: Parse tag  (v{openssh_ver}-{rpm_release})
+        id: parse
+        run: |
+          # Strip leading "v"
+          RAW="${GITHUB_REF_NAME#v}"
+          # Split on last "-" to separate openssh version from rpm release
+          # e.g.  9.9p2-1  →  openssh_ver=9.9p2  rpm_release=1
+          RPM_RELEASE="${RAW##*-}"
+          OPENSSH_VER="${RAW%-*}"
+
+          if [[ -z "${OPENSSH_VER}" || -z "${RPM_RELEASE}" ]]; then
+            echo "ERROR: Cannot parse tag '${GITHUB_REF_NAME}'."
+            echo "       Expected format: v{openssh_ver}-{rpm_release}  e.g. v9.9p2-1"
+            exit 1
+          fi
+
+          echo "Tag:          ${GITHUB_REF_NAME}"
+          echo "openssh_ver:  ${OPENSSH_VER}"
+          echo "rpm_release:  ${RPM_RELEASE}"
+
+          echo "openssh_ver=${OPENSSH_VER}" >> "$GITHUB_OUTPUT"
+          echo "rpm_release=${RPM_RELEASE}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+  # ── Build matrix: x86_64 + aarch64 ──────────────────────────────────────────
+  build:
+    name: Build RPMs (${{ matrix.arch }})
+    needs: parse-tag
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [x86_64, aarch64]
+
+    steps:
+      # ── 0. Install rpm-build toolchain ────────────────────────────────────
+      - name: Install rpm-build toolchain
+        run: |
+          dnf install -y --nodocs \
+            rpm-build rpmdevtools \
+            tar xz gzip coreutils curl \
+            binutils file findutils
+
+      # ── 1. Checkout at the tagged commit ──────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.parse-tag.outputs.tag_name }}
+
+      # ── 2. Cache source tarballs ───────────────────────────────────────────
+      - name: Restore source tarball cache
+        uses: actions/cache@v4
+        with:
+          path: SOURCES
+          key: >-
+            sources-${{ needs.parse-tag.outputs.openssh_ver }}-${{ env.OPENSSL_VER }}-${{ env.ZLIB_VER }}-${{ env.ZIG_VER }}
+
+      # ── 3. Install Zig (for running build.zig) ─────────────────────────────
+      - name: Install Zig ${{ env.ZIG_VER }}
+        run: |
+          ZIG_TAR="zig-linux-x86_64-${ZIG_VER}.tar.xz"
+          ZIG_URL="https://ziglang.org/download/${ZIG_VER}/${ZIG_TAR}"
+          if [[ -f "SOURCES/${ZIG_TAR}" ]]; then
+            echo "Using cached Zig tarball from SOURCES/"
+            tar -xJf "SOURCES/${ZIG_TAR}" -C /usr/local/
+          else
+            echo "Downloading Zig ${ZIG_VER}"
+            curl -fsSL --retry 3 "${ZIG_URL}" | tar -xJ -C /usr/local/
+          fi
+          echo "/usr/local/zig-linux-x86_64-${ZIG_VER}" >> "$GITHUB_PATH"
+          /usr/local/zig-linux-x86_64-${ZIG_VER}/zig version
+
+      # ── 4. Build RPMs ──────────────────────────────────────────────────────
+      # zig build rpm implicitly runs `fetch` (idempotent) before building.
+      - name: Build RPMs (${{ matrix.arch }})
+        run: |
+          zig build rpm \
+            -Dopenssh-ver=${{ needs.parse-tag.outputs.openssh_ver }} \
+            -Dopenssl-ver=${{ env.OPENSSL_VER }} \
+            -Dzlib-ver=${{ env.ZLIB_VER }} \
+            -Dzig-ver=${{ env.ZIG_VER }} \
+            -Darch=${{ matrix.arch }} \
+            -Drpm-release=${{ needs.parse-tag.outputs.rpm_release }}
+
+      # ── 5. Verify RPM count ────────────────────────────────────────────────
+      - name: Verify output
+        run: |
+          echo "Built RPMs:"
+          ls -lh output/*.rpm
+          COUNT=$(ls output/*.rpm | wc -l)
+          echo "Total: ${COUNT}"
+          [[ "${COUNT}" -eq 3 ]] || { echo "Expected 3 RPMs, got ${COUNT}"; exit 1; }
+
+      # ── 6. Upload arch artifact for the release job ────────────────────────
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpms-${{ matrix.arch }}
+          path: output/*.rpm
+          retention-days: 1
+          if-no-files-found: error
+
+  # ── Collect both arches and publish to GitHub Releases ───────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [parse-tag, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout (for release notes context) ──────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.parse-tag.outputs.tag_name }}
+          fetch-depth: 0
+
+      # ── 2. Download both arch artifacts ─────────────────────────────────────
+      - name: Download x86_64 RPMs
+        uses: actions/download-artifact@v4
+        with:
+          name: rpms-x86_64
+          path: release-assets/
+
+      - name: Download aarch64 RPMs
+        uses: actions/download-artifact@v4
+        with:
+          name: rpms-aarch64
+          path: release-assets/
+
+      # ── 3. Verify and generate checksums ─────────────────────────────────────
+      - name: Verify and generate checksums
+        run: |
+          echo "Release assets:"
+          ls -lh release-assets/
+          COUNT=$(ls release-assets/*.rpm | wc -l)
+          echo "Total RPM count: ${COUNT}"
+          [[ "${COUNT}" -eq 6 ]] || { echo "Expected 6 RPMs (3 per arch), got ${COUNT}"; exit 1; }
+          cd release-assets
+          sha256sum *.rpm > SHA256SUMS.txt
+          echo ""
+          cat SHA256SUMS.txt
+
+      # ── 4. Publish Release ───────────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.parse-tag.outputs.tag_name }}
+          name: "OpenSSH ${{ needs.parse-tag.outputs.openssh_ver }} (static musl) — Release ${{ needs.parse-tag.outputs.rpm_release }}"
+          generate_release_notes: true
+          body: |
+            ## OpenSSH ${{ needs.parse-tag.outputs.openssh_ver }} — Static musl RPM build
+
+            Statically compiled using **Zig ${{ env.ZIG_VER }}** targeting **musl libc**.
+            Zero glibc version-symbol dependencies — runs on any x86_64 / aarch64 Linux.
+
+            ### Bundled dependencies
+            | Library | Version |
+            |---------|---------|
+            | OpenSSL | ${{ env.OPENSSL_VER }} |
+            | zlib    | ${{ env.ZLIB_VER }} |
+
+            ### Packages
+            | Package | Contents |
+            |---------|----------|
+            | `openssh` | ssh-keygen, ssh-keyscan, sftp-server, ssh-keysign, moduli |
+            | `openssh-clients` | ssh, scp, sftp, ssh-add, ssh-agent |
+            | `openssh-server` | sshd, sshd.service, sshd_config |
+
+            ### Install (server example)
+            ```bash
+            # x86_64
+            rpm -ivh openssh-${{ needs.parse-tag.outputs.openssh_ver }}-${{ needs.parse-tag.outputs.rpm_release }}.x86_64.rpm \
+                     openssh-server-${{ needs.parse-tag.outputs.openssh_ver }}-${{ needs.parse-tag.outputs.rpm_release }}.x86_64.rpm
+            systemctl enable --now sshd
+            ```
+
+            ### Notes
+            - **PAM / GSSAPI / SELinux / Kerberos**: disabled — authentication via public key / certificate only
+            - **Cross-distro**: tested on CentOS 7 (glibc 2.17), Rocky 9, Ubuntu 22.04, Alpine 3.19
+            - Verify checksums with `SHA256SUMS.txt` included in this release
+
+          files: |
+            release-assets/*.rpm
+            release-assets/SHA256SUMS.txt
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false

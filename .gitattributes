@@ -1,0 +1,15 @@
+# Ensure shell scripts are checked out with execute permission on Linux/macOS
+scripts/fetch-sources.sh  text eol=lf
+scripts/build-local.sh    text eol=lf
+
+# Spec files and configs: LF line endings
+SPECS/*.spec              text eol=lf
+SOURCES/sshd.service      text eol=lf
+SOURCES/sshd_config       text eol=lf
+SOURCES/ssh_config        text eol=lf
+build.zig                 text eol=lf
+.github/workflows/*.yml   text eol=lf
+
+# Binary source archives: no line-ending conversion
+SOURCES/*.tar.gz          binary
+SOURCES/*.tar.xz          binary
