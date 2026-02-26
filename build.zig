@@ -219,14 +219,4 @@ pub fn build(b: *std.Build) void {
     const distclean_step = b.step("distclean", "Remove build output AND downloaded source tarballs");
     distclean_step.dependOn(&distclean_cmd.step);
 
-    // Suppress unused variable warnings for named steps that are
-    // referenced only via the step graph (not used as Zig values).
-    _ = fetch_step;
-    _ = fetch_force_step;
-    _ = fetch_force_cmd;
-    _ = check_step;
-    _ = check_deps_step;
-    _ = docker_step;
-    _ = clean_step;
-    _ = distclean_step;
 }
