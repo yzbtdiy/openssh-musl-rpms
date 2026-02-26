@@ -36,11 +36,11 @@ header(){ echo -e "\n${BOLD}━━━ $* ━━━${NC}"; }
 
 check_deps() {
   local missing=()
-  for cmd in rpmbuild rpmdev-setuptree rpm; do
+  for cmd in rpmbuild rpm; do
     command -v "${cmd}" &>/dev/null || missing+=("${cmd}")
   done
   if [[ ${#missing[@]} -gt 0 ]]; then
-    error "Missing tools: ${missing[*]}\nInstall with: dnf install rpm-build rpmdevtools"
+    error "Missing tools: ${missing[*]}\nInstall with: dnf install rpm-build"
   fi
 }
 
