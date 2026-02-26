@@ -35,6 +35,10 @@
 %endif
 %endif
 
+# Use bash for all RPM script sections (%build, %install, %check, etc.)
+# Ubuntu's /bin/sh is dash which lacks [[ ]] and pushd/popd.
+%global _buildshell /bin/bash
+
 # ── Package metadata ───────────────────────────────────────────────────────────
 Name:           openssh
 Version:        %{openssh_ver}
