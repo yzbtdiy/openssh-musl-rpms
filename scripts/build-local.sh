@@ -68,6 +68,7 @@ build_rpm() {
   header "Building ${spec} (${arch})"
 
   rpmbuild -bb \
+    --nodeps \
     --target "${arch}" \
     --define "openssh_ver   ${OPENSSH_VER}" \
     --define "openssl_ver   ${OPENSSL_VER}" \
