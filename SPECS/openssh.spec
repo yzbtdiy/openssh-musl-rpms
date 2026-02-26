@@ -46,7 +46,7 @@ URL:            https://www.openssh.com/
 Source0:        https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{openssh_ver}.tar.gz
 Source1:        https://github.com/openssl/openssl/releases/download/openssl-%{openssl_ver}/openssl-%{openssl_ver}.tar.gz
 Source2:        https://zlib.net/zlib-%{zlib_ver}.tar.gz
-Source3:        https://ziglang.org/download/%{zig_ver}/zig-linux-x86_64-%{zig_ver}.tar.xz
+Source3:        https://ziglang.org/download/%{zig_ver}/zig-x86_64-linux-%{zig_ver}.tar.xz
 
 # Declare bundled libraries so RPM auditors know they are intentional
 Provides:       bundled(openssl) = %{openssl_ver}
@@ -87,7 +87,7 @@ Authentication is via public-key / certificate only.
 cd %{_builddir}
 tar -xzf %{SOURCE1}   # openssl-%{openssl_ver}
 tar -xzf %{SOURCE2}   # zlib-%{zlib_ver}
-tar -xJf %{SOURCE3}   # zig-linux-x86_64-%{zig_ver}
+tar -xJf %{SOURCE3}   # zig-x86_64-linux-%{zig_ver}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ── SHARED BUILD LOGIC ────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ tar -xJf %{SOURCE3}   # zig-linux-x86_64-%{zig_ver}
 # ══════════════════════════════════════════════════════════════════════════════
 %build
 # ── Toolchain ─────────────────────────────────────────────────────────────────
-ZIG_DIR="%{_builddir}/zig-linux-x86_64-%{zig_ver}"
+ZIG_DIR="%{_builddir}/zig-x86_64-linux-%{zig_ver}"
 ZIG="${ZIG_DIR}/zig"
 SYSROOT="%{_builddir}/sysroot-%{_arch}"
 

@@ -55,7 +55,7 @@ setup_rpm_tree() {
   cp -u SOURCES/openssh-${OPENSSH_VER}.tar.gz       "${rpm_sources}/"
   cp -u SOURCES/openssl-${OPENSSL_VER}.tar.gz        "${rpm_sources}/"
   cp -u SOURCES/zlib-${ZLIB_VER}.tar.gz              "${rpm_sources}/"
-  cp -u SOURCES/zig-linux-x86_64-${ZIG_VER}.tar.xz  "${rpm_sources}/"
+  cp -u SOURCES/zig-x86_64-linux-${ZIG_VER}.tar.xz  "${rpm_sources}/"
   cp -u SOURCES/sshd.service                         "${rpm_sources}/"
   cp -u SOURCES/sshd_config                          "${rpm_sources}/"
   cp -u SOURCES/ssh_config                           "${rpm_sources}/"

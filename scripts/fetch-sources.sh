@@ -19,7 +19,7 @@ declare -A URLS=(
   ["openssh-${OPENSSH_VER}.tar.gz"]="https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VER}.tar.gz"
   ["openssl-${OPENSSL_VER}.tar.gz"]="https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VER}/openssl-${OPENSSL_VER}.tar.gz"
   ["zlib-${ZLIB_VER}.tar.gz"]="https://zlib.net/zlib-${ZLIB_VER}.tar.gz"
-  ["zig-linux-x86_64-${ZIG_VER}.tar.xz"]="https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz"
+  ["zig-x86_64-linux-${ZIG_VER}.tar.xz"]="https://ziglang.org/download/${ZIG_VER}/zig-x86_64-linux-${ZIG_VER}.tar.xz"
 )
 
 # ─── SHA-256 Checksums ───────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ declare -A SHA256=(
   ["openssh-${OPENSSH_VER}.tar.gz"]="VERIFY_AND_UPDATE_SHA256_openssh"
   ["openssl-${OPENSSL_VER}.tar.gz"]="VERIFY_AND_UPDATE_SHA256_openssl"
   ["zlib-${ZLIB_VER}.tar.gz"]="VERIFY_AND_UPDATE_SHA256_zlib"
-  ["zig-linux-x86_64-${ZIG_VER}.tar.xz"]="VERIFY_AND_UPDATE_SHA256_zig_x86_64"
+  ["zig-x86_64-linux-${ZIG_VER}.tar.xz"]="VERIFY_AND_UPDATE_SHA256_zig_x86_64"
 )
 
 # ─── Checksums file (committed to repo after first verified download) ────────

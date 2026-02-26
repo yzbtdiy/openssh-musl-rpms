@@ -97,7 +97,7 @@ jobs:
       # ── 3. Install Zig (for running build.zig) ─────────────────────────────
       - name: Install Zig ${{ env.ZIG_VER }}
         run: |
-          ZIG_TAR="zig-linux-x86_64-${ZIG_VER}.tar.xz"
+          ZIG_TAR="zig-x86_64-linux-${ZIG_VER}.tar.xz"
           ZIG_URL="https://ziglang.org/download/${ZIG_VER}/${ZIG_TAR}"
           if [[ -f "SOURCES/${ZIG_TAR}" ]]; then
             echo "Using cached Zig tarball from SOURCES/"
@@ -106,8 +106,8 @@ jobs:
             echo "Downloading Zig ${ZIG_VER}"
             curl -fsSL --retry 3 "${ZIG_URL}" | tar -xJ -C /usr/local/
           fi
-          echo "/usr/local/zig-linux-x86_64-${ZIG_VER}" >> "$GITHUB_PATH"
-          /usr/local/zig-linux-x86_64-${ZIG_VER}/zig version
+          echo "/usr/local/zig-x86_64-linux-${ZIG_VER}" >> "$GITHUB_PATH"
+          /usr/local/zig-x86_64-linux-${ZIG_VER}/zig version
 
       # ── 4. Build RPMs ──────────────────────────────────────────────────────
       # zig build rpm implicitly runs `fetch` (idempotent) before building.

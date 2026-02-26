@@ -210,7 +210,7 @@ pub fn build(b: *std.Build) void {
         \\rm -f  SOURCES/openssh-{s}.tar.gz
         \\rm -f  SOURCES/openssl-{s}.tar.gz
         \\rm -f  SOURCES/zlib-{s}.tar.gz
-        \\rm -f  SOURCES/zig-linux-x86_64-{s}.tar.xz
+        \\rm -f  SOURCES/zig-x86_64-linux-{s}.tar.xz
         \\rm -f  SOURCES/checksums.sha256
         \\echo "Distclean complete."
     , .{ output_dir, openssh_ver, openssl_ver, zlib_ver, zig_ver });
