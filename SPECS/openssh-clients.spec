@@ -128,6 +128,7 @@ if [[ ! -f "${SYSROOT}/.deps-built" ]]; then
       -static             \
       --prefix="${SYSROOT}"                   \
       --openssldir="${SYSROOT}/etc/ssl"       \
+      --libdir=lib                            \
       -I"${SYSROOT}/include"                  \
       -L"${SYSROOT}/lib"
     make -j$(nproc) build_libs
@@ -162,8 +163,17 @@ ac_cv_func_gai_strerror=yes
 ac_cv_func_freeaddrinfo=yes
 CACHE_EOF
 
+# For cross-compilation targets, declare the host so configure doesn't try
+# to execute target binaries on the build machine.
+%ifarch aarch64
+CONFIGURE_HOST_ARG="--host=aarch64-linux-musl"
+%else
+CONFIGURE_HOST_ARG=""
+%endif
+
   ./configure                                   \
     --cache-file=config.cache                   \
+    ${CONFIGURE_HOST_ARG}                       \
     --prefix=/usr                               \
     --sbindir=/usr/sbin                         \
     --libexecdir=/usr/libexec/openssh           \
