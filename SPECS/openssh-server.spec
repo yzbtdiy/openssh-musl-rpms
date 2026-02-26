@@ -7,13 +7,13 @@
 # Build:
 #   rpmbuild -bb --target x86_64 SPECS/openssh-server.spec \
 #     --define "openssh_ver 9.9p2" --define "openssl_ver 3.5.0" \
-#     --define "zlib_ver 1.3.1"    --define "zig_ver 0.15.2"
+#     --define "zlib_ver 1.3.2"    --define "zig_ver 0.15.2"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Version globals (overridable via --define) ─────────────────────────────────
 %global openssh_ver  %{?_openssh_ver}%{!?_openssh_ver:9.9p2}
 %global openssl_ver  %{?_openssl_ver}%{!?_openssl_ver:3.5.0}
-%global zlib_ver     %{?_zlib_ver}%{!?_zlib_ver:1.3.1}
+%global zlib_ver     %{?_zlib_ver}%{!?_zlib_ver:1.3.2}
 %global zig_ver      %{?_zig_ver}%{!?_zig_ver:0.15.2}
 
 %{?openssh_ver: %global openssh_ver %{openssh_ver}}

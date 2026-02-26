@@ -13,7 +13,7 @@ cd "${REPO_ROOT}"
 # ─── Version Pins ─────────────────────────────────────────────────────────────
 OPENSSH_VER="${OPENSSH_VER:-9.9p2}"
 OPENSSL_VER="${OPENSSL_VER:-3.5.0}"
-ZLIB_VER="${ZLIB_VER:-1.3.1}"
+ZLIB_VER="${ZLIB_VER:-1.3.2}"
 ZIG_VER="${ZIG_VER:-0.15.2}"
 RPM_RELEASE="${RPM_RELEASE:-1}"
 
