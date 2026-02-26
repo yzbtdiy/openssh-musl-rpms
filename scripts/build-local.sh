@@ -46,7 +46,8 @@ check_deps() {
 
 # ─── Setup rpm tree ───────────────────────────────────────────────────────────
 setup_rpm_tree() {
-  rpmdev-setuptree 2>/dev/null || true
+  # rpmdev-setuptree is not available on all distros (e.g. Ubuntu); create dirs manually
+  mkdir -p "${HOME}/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
   local rpm_sources="${HOME}/rpmbuild/SOURCES"
   local rpm_specs="${HOME}/rpmbuild/SPECS"
 
