@@ -37,6 +37,8 @@
 # Use bash for all RPM script sections (%build, %install, %check, etc.)
 # Ubuntu's /bin/sh is dash which lacks [[ ]] and pushd/popd.
 %global _buildshell /bin/bash
+# Cross-arch build: avoid host /usr/bin/strip on foreign-arch static binaries.
+%global __strip /bin/true
 
 # ── Package metadata ───────────────────────────────────────────────────────────
 Name:           openssh-server
@@ -90,6 +92,7 @@ UsePAM is set to "no" in the default sshd_config.
 %setup -q -n openssh-%{openssh_ver}
 
 cd %{_builddir}
+rm -rf openssl-%{openssl_ver} zlib-%{zlib_ver} zig-x86_64-linux-%{zig_ver}
 tar -xzf %{SOURCE1}
 tar -xzf %{SOURCE2}
 tar -xJf %{SOURCE3}
@@ -109,7 +112,11 @@ export AR="${ZIG} ar"
 export RANLIB="${ZIG} ranlib"
 export STRIP=":"
 
-if [[ ! -f "${SYSROOT}/.deps-built" ]]; then
+if [[ ! -f "${SYSROOT}/.deps-built-v3" || \
+      ! -f "${SYSROOT}/lib/libz.a" || \
+      ! -f "${SYSROOT}/lib/libcrypto.a" || \
+      ! -f "${SYSROOT}/lib/libssl.a" ]]; then
+  rm -rf "${SYSROOT}"
   mkdir -p "${SYSROOT}"
 
   pushd %{_builddir}/zlib-%{zlib_ver}
@@ -120,7 +127,7 @@ if [[ ! -f "${SYSROOT}/.deps-built" ]]; then
   popd
 
   pushd %{_builddir}/openssl-%{openssl_ver}
-    ./Configure \
+    CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" ./Configure \
       %{openssl_target}   \
       no-shared           \
       no-dso              \
@@ -138,7 +145,7 @@ if [[ ! -f "${SYSROOT}/.deps-built" ]]; then
     make install_dev
   popd
 
-  touch "${SYSROOT}/.deps-built"
+  touch "${SYSROOT}/.deps-built-v3"
 fi
 
 pushd %{_builddir}/openssh-%{openssh_ver}
@@ -197,15 +204,15 @@ CONFIGURE_HOST_ARG="--host=x86_64-linux-musl"
     --without-kerberos5                         \
     --disable-pkcs11                            \
     --disable-strip                             \
-    LDFLAGS="-static -L${SYSROOT}/lib"      \
-    CPPFLAGS="-I${SYSROOT}/include"         \
+    LDFLAGS="-static -L. -Lopenbsd-compat -L${SYSROOT}/lib" \
+    CPPFLAGS="-I${SYSROOT}/include -DHAVE_EVP_CIPHER_CTX_IV=1 -DHAVE_EVP_CIPHER_CTX_IV_NOCONST=1 -DHAVE_EVP_DIGESTSIGN=1 -DHAVE_EVP_DIGESTVERIFY=1" \
     LIBS="-ldl -lpthread" || {
     echo "=== configure FAILED: last 100 lines of config.log ===" >&2
     tail -100 config.log >&2 || true
     exit 1
   }
 
-  make -j$(nproc) LDFLAGS="-static -L${SYSROOT}/lib"
+  make -j$(nproc) LDFLAGS="-static -L. -Lopenbsd-compat -L${SYSROOT}/lib"
   touch .openssh-built
 fi
 popd

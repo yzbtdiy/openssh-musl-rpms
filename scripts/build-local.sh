@@ -84,6 +84,17 @@ build_rpm() {
   info "Done: ${spec} (${arch})"
 }
 
+# ─── Locate latest RPM regardless of RPMS layout ─────────────────────────────
+find_latest_rpm() {
+  local rpm_dir="$1"
+  local spec="$2"
+  local arch="$3"
+
+  find "${rpm_dir}" -maxdepth 2 -type f \
+    -name "${spec}-${OPENSSH_VER}-*.${arch}.rpm" 2>/dev/null \
+    | sort -V | tail -1
+}
+
 # ─── Verify static linkage of all binaries in an RPM ─────────────────────────
 verify_static() {
   local rpm_file="$1"
@@ -131,11 +142,10 @@ verify_all() {
 
   for arch in "${ARCHS[@]}"; do
     for spec in "${SPECS[@]}"; do
-      local pattern="${rpm_dir}/${arch}/${spec}-${OPENSSH_VER}-*.${arch}.rpm"
       local rpm_file
-      rpm_file="$(ls ${pattern} 2>/dev/null | sort -V | tail -1 || true)"
+      rpm_file="$(find_latest_rpm "${rpm_dir}" "${spec}" "${arch}")"
       if [[ -z "${rpm_file}" ]]; then
-        warn "RPM not found for ${spec}/${arch} (pattern: ${pattern})"
+        warn "RPM not found for ${spec}/${arch} under ${rpm_dir}"
         continue
       fi
       echo -e "\n${BOLD}Checking:${NC} ${rpm_file}"
@@ -159,9 +169,8 @@ print_summary() {
   printf "%-45s  %-8s  %s\n" "-------" "----" "----"
   for arch in "${ARCHS[@]}"; do
     for spec in "${SPECS[@]}"; do
-      local pattern="${rpm_dir}/${arch}/${spec}-${OPENSSH_VER}-*.${arch}.rpm"
       local rpm_file
-      rpm_file="$(ls ${pattern} 2>/dev/null | sort -V | tail -1 || true)"
+      rpm_file="$(find_latest_rpm "${rpm_dir}" "${spec}" "${arch}")"
       if [[ -n "${rpm_file}" ]]; then
         local size
         size="$(du -h "${rpm_file}" | cut -f1)"
