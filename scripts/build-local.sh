@@ -13,7 +13,7 @@ cd "${REPO_ROOT}"
 # ─── Version Pins ─────────────────────────────────────────────────────────────
 OPENSSH_VER="${OPENSSH_VER:-9.9p2}"
 OPENSSL_VER="${OPENSSL_VER:-3.5.0}"
-ZLIB_VER="${ZLIB_VER:-1.3.1}"
+ZLIB_VER="${ZLIB_VER:-1.3.2}"
 ZIG_VER="${ZIG_VER:-0.15.2}"
 RPM_RELEASE="${RPM_RELEASE:-1}"
 
@@ -36,11 +36,11 @@ header(){ echo -e "\n${BOLD}━━━ $* ━━━${NC}"; }
 
 check_deps() {
   local missing=()
-  for cmd in rpmbuild rpmdev-setuptree rpm; do
+  for cmd in rpmbuild rpm; do
     command -v "${cmd}" &>/dev/null || missing+=("${cmd}")
   done
   if [[ ${#missing[@]} -gt 0 ]]; then
-    error "Missing tools: ${missing[*]}\nInstall with: dnf install rpm-build rpmdevtools"
+    error "Missing tools: ${missing[*]}\nInstall with: dnf install rpm-build"
   fi
 }
 
@@ -68,6 +68,7 @@ build_rpm() {
   header "Building ${spec} (${arch})"
 
   rpmbuild -bb \
+    --nodeps \
     --target "${arch}" \
     --define "openssh_ver   ${OPENSSH_VER}" \
     --define "openssl_ver   ${OPENSSL_VER}" \

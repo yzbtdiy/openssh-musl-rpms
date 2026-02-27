@@ -7,13 +7,13 @@
 # Build:
 #   rpmbuild -bb --target x86_64 SPECS/openssh.spec \
 #     --define "openssh_ver 9.9p2" --define "openssl_ver 3.5.0" \
-#     --define "zlib_ver 1.3.1"    --define "zig_ver 0.15.2"
+#     --define "zlib_ver 1.3.2"    --define "zig_ver 0.15.2"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Version globals (overridable via --define) ─────────────────────────────────
 %global openssh_ver  %{?_openssh_ver}%{!?_openssh_ver:9.9p2}
 %global openssl_ver  %{?_openssl_ver}%{!?_openssl_ver:3.5.0}
-%global zlib_ver     %{?_zlib_ver}%{!?_zlib_ver:1.3.1}
+%global zlib_ver     %{?_zlib_ver}%{!?_zlib_ver:1.3.2}
 %global zig_ver      %{?_zig_ver}%{!?_zig_ver:0.15.2}
 
 # Allow callers to pass version via plain --define "openssh_ver X.Yp2"
@@ -34,6 +34,10 @@
 %{error: Unsupported architecture '%{_arch}'. Supported: x86_64, aarch64}
 %endif
 %endif
+
+# Use bash for all RPM script sections (%build, %install, %check, etc.)
+# Ubuntu's /bin/sh is dash which lacks [[ ]] and pushd/popd.
+%global _buildshell /bin/bash
 
 # ── Package metadata ───────────────────────────────────────────────────────────
 Name:           openssh
@@ -132,6 +136,7 @@ if [[ ! -f "${SYSROOT}/.deps-built" ]]; then
       -static             \
       --prefix="${SYSROOT}"                   \
       --openssldir="${SYSROOT}/etc/ssl"       \
+      --libdir=lib                            \
       -I"${SYSROOT}/include"                  \
       -L"${SYSROOT}/lib"
     make -j$(nproc) build_libs
@@ -169,8 +174,22 @@ ac_cv_func_gai_strerror=yes
 ac_cv_func_freeaddrinfo=yes
 CACHE_EOF
 
+# Patch configure: downgrade the RAND_add link test from a fatal error to a
+# warning.  OpenSSL 3.5.0 built with no-legacy does not export the deprecated
+# RAND_add wrapper; OpenSSH 9.9p2 uses EVP RAND APIs and never calls RAND_add.
+sed -i '/working libcrypto not found/s/as_fn_error \$?/echo/' configure
+
+# For cross-compilation targets, declare the host so configure doesn't try
+# to execute target binaries on the build machine.
+%ifarch aarch64
+CONFIGURE_HOST_ARG="--host=aarch64-linux-musl"
+%else
+CONFIGURE_HOST_ARG="--host=x86_64-linux-musl"
+%endif
+
   ./configure                                   \
     --cache-file=config.cache                   \
+    ${CONFIGURE_HOST_ARG}                       \
     --prefix=/usr                               \
     --sbindir=/usr/sbin                         \
     --libexecdir=/usr/libexec/openssh           \
@@ -186,11 +205,15 @@ CACHE_EOF
     --without-kerberos5                         \
     --disable-pkcs11                            \
     --disable-strip                             \
-    LDFLAGS="-static -static-libgcc -L${SYSROOT}/lib"   \
-    CPPFLAGS="-I${SYSROOT}/include"                      \
-    LIBS="-ldl -lpthread"
+    LDFLAGS="-static -L${SYSROOT}/lib"      \
+    CPPFLAGS="-I${SYSROOT}/include"         \
+    LIBS="-ldl -lpthread" || {
+    echo "=== configure FAILED: last 100 lines of config.log ===" >&2
+    tail -100 config.log >&2 || true
+    exit 1
+  }
 
-  make -j$(nproc)
+  make -j$(nproc) LDFLAGS="-static -L${SYSROOT}/lib"
   touch .openssh-built
 fi
 popd

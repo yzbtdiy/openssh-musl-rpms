@@ -16,7 +16,7 @@
 // Options (pass as -Dname=value):
 //   -Dopenssh-ver=9.9p2      OpenSSH version
 //   -Dopenssl-ver=3.5.0      OpenSSL version
-//   -Dzlib-ver=1.3.1         zlib version
+//   -Dzlib-ver=1.3.2         zlib version
 //   -Dzig-ver=0.15.2         Zig toolchain version (used inside RPM spec)
 //   -Drpm-release=1          RPM release number
 //   -Darch=x86_64            Target arch: x86_64 | aarch64 | all
@@ -29,7 +29,7 @@ pub fn build(b: *std.Build) void {
     // ── Version options ────────────────────────────────────────────────────────
     const openssh_ver  = b.option([]const u8, "openssh-ver",   "OpenSSH version")                            orelse "9.9p2";
     const openssl_ver  = b.option([]const u8, "openssl-ver",   "OpenSSL version")                            orelse "3.5.0";
-    const zlib_ver     = b.option([]const u8, "zlib-ver",      "zlib version")                               orelse "1.3.1";
+    const zlib_ver     = b.option([]const u8, "zlib-ver",      "zlib version")                               orelse "1.3.2";
     const zig_ver      = b.option([]const u8, "zig-ver",       "Zig toolchain version (used in RPM spec)")   orelse "0.15.2";
     const rpm_release  = b.option([]const u8, "rpm-release",   "RPM release number")                         orelse "1";
     const arch         = b.option([]const u8, "arch",          "Target arch: x86_64 | aarch64 | all")        orelse "x86_64";
@@ -219,14 +219,4 @@ pub fn build(b: *std.Build) void {
     const distclean_step = b.step("distclean", "Remove build output AND downloaded source tarballs");
     distclean_step.dependOn(&distclean_cmd.step);
 
-    // Suppress unused variable warnings for named steps that are
-    // referenced only via the step graph (not used as Zig values).
-    _ = fetch_step;
-    _ = fetch_force_step;
-    _ = fetch_force_cmd;
-    _ = check_step;
-    _ = check_deps_step;
-    _ = docker_step;
-    _ = clean_step;
-    _ = distclean_step;
 }
