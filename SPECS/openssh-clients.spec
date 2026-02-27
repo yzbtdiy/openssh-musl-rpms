@@ -189,11 +189,11 @@ CONFIGURE_HOST_ARG=""
     --without-kerberos5                         \
     --disable-pkcs11                            \
     --disable-strip                             \
-    LDFLAGS="-static -static-libgcc -L${SYSROOT}/lib"   \
-    CPPFLAGS="-I${SYSROOT}/include"                      \
+    LDFLAGS="-L${SYSROOT}/lib"              \
+    CPPFLAGS="-I${SYSROOT}/include"         \
     LIBS="-ldl -lpthread"
 
-  make -j$(nproc)
+  make -j$(nproc) LDFLAGS="-static -L${SYSROOT}/lib"
   touch .openssh-built
 fi
 popd
