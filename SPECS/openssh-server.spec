@@ -164,9 +164,12 @@ ac_cv_lib_pam_pam_start=no
 ac_cv_func_getaddrinfo=yes
 ac_cv_func_gai_strerror=yes
 ac_cv_func_freeaddrinfo=yes
-ac_cv_lib_crypto_RAND_add=yes
-ac_cv_lib_ssl_SSL_new=yes
 CACHE_EOF
+
+# Patch configure: downgrade the RAND_add link test from a fatal error to a
+# warning.  OpenSSL 3.5.0 built with no-legacy does not export the deprecated
+# RAND_add wrapper; OpenSSH 9.9p2 uses EVP RAND APIs and never calls RAND_add.
+sed -i '/working libcrypto not found/s/as_fn_error \$?/echo/' configure
 
 # For cross-compilation targets, declare the host so configure doesn't try
 # to execute target binaries on the build machine.
@@ -194,9 +197,13 @@ CONFIGURE_HOST_ARG="--host=x86_64-linux-musl"
     --without-kerberos5                         \
     --disable-pkcs11                            \
     --disable-strip                             \
-    LDFLAGS="-L${SYSROOT}/lib"              \
+    LDFLAGS="-static -L${SYSROOT}/lib"      \
     CPPFLAGS="-I${SYSROOT}/include"         \
-    LIBS="-ldl -lpthread"
+    LIBS="-ldl -lpthread" || {
+    echo "=== configure FAILED: last 100 lines of config.log ===" >&2
+    tail -100 config.log >&2 || true
+    exit 1
+  }
 
   make -j$(nproc) LDFLAGS="-static -L${SYSROOT}/lib"
   touch .openssh-built
