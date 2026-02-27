@@ -309,7 +309,7 @@ for bin in %{buildroot}/usr/sbin/sshd; do
 done
 
 # Validate sshd configuration syntax (privilege separation needs /var/empty)
-mkdir -p /var/empty
+mkdir -p /var/empty 2>/dev/null || true
 %{buildroot}/usr/sbin/sshd -t -f %{buildroot}/etc/ssh/sshd_config \
   -h %{buildroot}/etc/ssh/ssh_host_ed25519_key 2>/dev/null || \
   echo "(sshd -t skipped: host keys not present at check time)"
