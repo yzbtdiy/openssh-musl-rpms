@@ -161,6 +161,8 @@ ac_cv_lib_pam_pam_start=no
 ac_cv_func_getaddrinfo=yes
 ac_cv_func_gai_strerror=yes
 ac_cv_func_freeaddrinfo=yes
+ac_cv_lib_crypto_RAND_add=yes
+ac_cv_lib_ssl_SSL_new=yes
 CACHE_EOF
 
 # For cross-compilation targets, declare the host so configure doesn't try
@@ -168,7 +170,7 @@ CACHE_EOF
 %ifarch aarch64
 CONFIGURE_HOST_ARG="--host=aarch64-linux-musl"
 %else
-CONFIGURE_HOST_ARG=""
+CONFIGURE_HOST_ARG="--host=x86_64-linux-musl"
 %endif
 
   ./configure                                   \
