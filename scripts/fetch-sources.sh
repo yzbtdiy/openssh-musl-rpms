@@ -23,10 +23,8 @@ declare -A URLS=(
 )
 
 # ─── SHA-256 Checksums ───────────────────────────────────────────────────────
-# Update these after verifying downloads from official sources.
-# Verify independently:
-#   curl -sL <url>.sha256 | sha256sum -c -
-#   gpg --verify <url>.asc
+# Load pinned hashes from the committed checksums file if available.
+# Otherwise fall back to VERIFY_AND_UPDATE placeholders.
 declare -A SHA256=(
   ["openssh-${OPENSSH_VER}.tar.gz"]="VERIFY_AND_UPDATE_SHA256_openssh"
   ["openssl-${OPENSSL_VER}.tar.gz"]="VERIFY_AND_UPDATE_SHA256_openssl"
@@ -36,6 +34,17 @@ declare -A SHA256=(
 
 # ─── Checksums file (committed to repo after first verified download) ────────
 CHECKSUM_FILE="${REPO_ROOT}/SOURCES/checksums.sha256"
+
+# Load committed checksums — overrides placeholders above
+if [[ -f "${CHECKSUM_FILE}" ]]; then
+  while IFS=' ' read -r hash _ filename; do
+    # Skip blank lines and comments
+    [[ -z "${hash}" || "${hash}" == \#* ]] && continue
+    if [[ -n "${SHA256[${filename}]+x}" ]]; then
+      SHA256["${filename}"]="${hash}"
+    fi
+  done < "${CHECKSUM_FILE}"
+fi
 
 FORCE="${1:-}"
 

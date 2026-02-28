@@ -1,4 +1,4 @@
-# Downloaded source tarballs (fetched by make fetch / scripts/fetch-sources.sh)
+# Downloaded source tarballs (fetched by zig build fetch / scripts/fetch-sources.sh)
 SOURCES/*.tar.gz
 SOURCES/*.tar.xz
 
@@ -28,5 +28,8 @@ SRPMS/
 Thumbs.db
 *.swp
 *.swo
+*~
+.vscode/
+.idea/
 .idea/
 .vscode/

@@ -32,49 +32,26 @@ jobs:
         arch: [x86_64, aarch64]
 
     steps:
-      # ── 0. Install rpm-build toolchain ──────────────────────────────────────
-      - name: Install rpm-build toolchain
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            rpm rpm2cpio \
-            tar xz-utils gzip coreutils curl \
-            binutils file findutils cpio
-
-      # ── 1. Checkout ─────────────────────────────────────────────────────────
+      # ── 0. Checkout ─────────────────────────────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # ── 2. Cache source tarballs ─────────────────────────────────────────────
-      # Path covers all tarballs including the Zig host toolchain tarball.
-      # On cache hit, the implicit `fetch` inside `zig build rpm` skips downloads.
+      # ── 1. Cache source tarballs ─────────────────────────────────────────────
       - name: Restore source tarball cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: SOURCES
           key: sources-${{ env.OPENSSH_VER }}-${{ env.OPENSSL_VER }}-${{ env.ZLIB_VER }}-${{ env.ZIG_VER }}
           restore-keys: |
             sources-${{ env.OPENSSH_VER }}-${{ env.OPENSSL_VER }}-${{ env.ZLIB_VER }}-
 
-      # ── 3. Install Zig (for running build.zig) ───────────────────────────────
-      # Uses the cached tarball from SOURCES/ if available; downloads otherwise.
-      - name: Install Zig ${{ env.ZIG_VER }}
-        run: |
-          ZIG_TAR="zig-x86_64-linux-${ZIG_VER}.tar.xz"
-          ZIG_URL="https://ziglang.org/download/${ZIG_VER}/${ZIG_TAR}"
-          if [[ -f "SOURCES/${ZIG_TAR}" ]]; then
-            echo "Using cached Zig tarball from SOURCES/"
-            sudo tar -xJf "SOURCES/${ZIG_TAR}" -C /usr/local/
-          else
-            echo "Downloading Zig ${ZIG_VER}"
-            curl -fsSL --retry 3 "${ZIG_URL}" | sudo tar -xJ -C /usr/local/
-          fi
-          echo "/usr/local/zig-x86_64-linux-${ZIG_VER}" >> "$GITHUB_PATH"
-          /usr/local/zig-x86_64-linux-${ZIG_VER}/zig version
+      # ── 2. Setup build environment (rpm-build + Zig) ─────────────────────────
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build-env
+        with:
+          zig-ver: ${{ env.ZIG_VER }}
 
-      # ── 4. Build RPMs ────────────────────────────────────────────────────────
-      # `zig build rpm` implicitly runs `fetch` (idempotent) then builds.
-      # Cache hit → fetch skips downloads; cache miss → fetch downloads all.
+      # ── 3. Build RPMs ────────────────────────────────────────────────────────
       - name: Build RPMs (${{ matrix.arch }})
         run: |
           zig build rpm \
@@ -85,9 +62,13 @@ jobs:
             -Darch=${{ matrix.arch }} \
             -Drpm-release=${{ env.RPM_RELEASE }}
 
+      # ── 4. Verify static linkage ─────────────────────────────────────────────
+      - name: Verify RPMs are fully statically linked
+        run: zig build check
+
       # ── 5. Upload as build artifact (7-day retention for PR review) ──────────
       - name: Upload RPM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rpms-${{ matrix.arch }}-pr${{ github.run_number }}
           path: output/*.rpm

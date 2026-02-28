@@ -7,7 +7,7 @@
 | 包名 | 内容 |
 |------|------|
 | `openssh` | ssh-keygen、ssh-keyscan、sftp-server、ssh-keysign、moduli |
-| `openssh-clients` | ssh、scp、sftp、ssh-add、ssh-agent |
+| `openssh-clients` | ssh、scp、sftp、ssh-add、ssh-agent、ssh_config |
 | `openssh-server` | sshd、sshd-session、sshd-auth、sshd.service、sshd_config |
 
 ## 默认版本
@@ -26,6 +26,7 @@
 - **交叉编译** — 在 x86_64 主机上通过 `zig cc` 同时构建 x86_64 和 aarch64（无需 QEMU）
 - **内置** OpenSSL 和 zlib（no-shared，静态链接）
 - **升级路径** — 覆盖发行版自带的 `openssh` 包（`Obsoletes: openssh < version`）
+- **CI 验证** — 每次构建自动验证 RPM 完全静态链接，零 glibc 符号依赖
 
 ## 前置要求
 
@@ -176,8 +177,8 @@ ssh -i ~/.ssh/id_ed25519 user@host
 
 ## CI / 发布
 
-- **`build.yml`** — 每次 push / PR 触发，构建 x86_64 和 aarch64，将 RPM 作为构建产物上传（保留 7 天）。
-- **`release.yml`** — 推送符合 `v{openssh_ver}-{rpm_release}` 格式的标签（如 `v10.2p1-1`）时触发，将 6 个 RPM 和 `SHA256SUMS.txt` 发布到 GitHub Releases。
+- **`build.yml`** — 每次 push / PR 触发，构建 x86_64 和 aarch64，自动验证静态链接，将 RPM 作为构建产物上传（保留 7 天）。
+- **`release.yml`** — 推送符合 `v{openssh_ver}-{rpm_release}` 格式的标签（如 `v10.2p1-1`）时触发，验证静态链接后将 6 个 RPM 和 `SHA256SUMS.txt` 发布到 GitHub Releases。
 
 ```bash
 # 创建发布
@@ -193,14 +194,20 @@ SPECS/
   openssh-clients.spec  # 客户端：ssh、scp、sftp、ssh-add、ssh-agent
   openssh-server.spec   # 服务端：sshd、sshd.service、sshd_config
 SOURCES/
-  sshd_config           # sshd 默认配置
+  sshd_config           # sshd 默认配置（仅公钥认证）
   ssh_config            # ssh 客户端默认配置
-  sshd.service          # systemd 单元文件
+  sshd.service          # systemd 单元文件（Type=simple）
   checksums.sha256      # 所有源码包的 SHA-256 固定哈希
 scripts/
-  fetch-sources.sh      # 下载并校验源码包
+  fetch-sources.sh      # 下载并校验源码包（自动加载 checksums.sha256）
   build-local.sh        # 调用 rpmbuild 构建所有 spec 和架构
 build.zig               # Zig 构建脚本（编排 fetch + build + check）
+.github/
+  actions/
+    setup-build-env/    # 共享 composite action（安装 rpm-build + Zig）
+  workflows/
+    build.yml           # PR / push 验证构建
+    release.yml         # 标签触发发布
 ```
 
 ## 许可证

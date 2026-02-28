@@ -5,9 +5,11 @@ After=network.target sshd-keygen.service
 Wants=sshd-keygen.service
 
 [Service]
-Type=notify
-NotifyAccess=main
+# Type=simple because this static musl build is compiled --without-systemd,
+# so sshd cannot call sd_notify(). Using -D keeps sshd in the foreground.
+Type=simple
 EnvironmentFile=-/etc/sysconfig/sshd
+ExecStartPre=/usr/bin/ssh-keygen -A
 ExecStart=/usr/sbin/sshd -D $OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process

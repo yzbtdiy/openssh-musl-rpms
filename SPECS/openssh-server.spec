@@ -6,8 +6,8 @@
 #
 # Build:
 #   rpmbuild -bb --target x86_64 SPECS/openssh-server.spec \
-#     --define "openssh_ver 9.9p2" --define "openssl_ver 3.5.0" \
-#     --define "zlib_ver 1.3.2"    --define "zig_ver 0.15.2"
+#     --define "openssh_ver 10.2p1" --define "openssl_ver 3.6.1" \
+#     --define "zlib_ver 1.3.2"     --define "zig_ver 0.15.2"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Version globals (overridable via --define) ─────────────────────────────────
@@ -173,11 +173,6 @@ ac_cv_func_gai_strerror=yes
 ac_cv_func_freeaddrinfo=yes
 CACHE_EOF
 
-# Patch configure: downgrade the RAND_add link test from a fatal error to a
-# warning.  OpenSSL 3.5.0 built with no-legacy does not export the deprecated
-# RAND_add wrapper; OpenSSH 9.9p2 uses EVP RAND APIs and never calls RAND_add.
-sed -i '/working libcrypto not found/s/as_fn_error \$?/echo/' configure
-
 # For cross-compilation targets, declare the host so configure doesn't try
 # to execute target binaries on the build machine.
 %ifarch aarch64
@@ -202,7 +197,6 @@ CONFIGURE_HOST_ARG="--host=x86_64-linux-musl"
     --without-selinux                           \
     --without-systemd                           \
     --without-kerberos5                         \
-    --disable-pkcs11                            \
     --disable-strip                             \
     LDFLAGS="-static -L. -Lopenbsd-compat -L${SYSROOT}/lib" \
     CPPFLAGS="-I${SYSROOT}/include -DHAVE_EVP_CIPHER_CTX_IV=1 -DHAVE_EVP_CIPHER_CTX_IV_NOCONST=1 -DHAVE_EVP_DIGESTSIGN=1 -DHAVE_EVP_DIGESTVERIFY=1" \

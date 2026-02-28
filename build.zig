@@ -14,8 +14,8 @@
 //   zig build distclean    — remove build output AND downloaded tarballs
 //
 // Options (pass as -Dname=value):
-//   -Dopenssh-ver=9.9p2      OpenSSH version
-//   -Dopenssl-ver=3.5.0      OpenSSL version
+//   -Dopenssh-ver=10.2p1     OpenSSH version
+//   -Dopenssl-ver=3.6.1      OpenSSL version
 //   -Dzlib-ver=1.3.2         zlib version
 //   -Dzig-ver=0.15.2         Zig toolchain version (used inside RPM spec)
 //   -Drpm-release=1          RPM release number

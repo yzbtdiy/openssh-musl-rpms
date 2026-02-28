@@ -27,7 +27,6 @@ AuthorizedKeysFile .ssh/authorized_keys
 # Explicitly disable all password-based methods
 PasswordAuthentication no
 PermitEmptyPasswords no
-ChallengeResponseAuthentication no
 KbdInteractiveAuthentication no
 
 # ── Forwarding ─────────────────────────────────────────────────────────────────

@@ -71,45 +71,29 @@ jobs:
         arch: [x86_64, aarch64]
 
     steps:
-      # ── 0. Install rpm-build toolchain ────────────────────────────────────
-      - name: Install rpm-build toolchain
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            rpm rpm2cpio \
-            tar xz-utils gzip coreutils curl \
-            binutils file findutils cpio
-
-      # ── 1. Checkout at the tagged commit ──────────────────────────────────
+      # ── 0. Checkout at the tagged commit ──────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.parse-tag.outputs.tag_name }}
 
-      # ── 2. Cache source tarballs ───────────────────────────────────────────
+      # ── 1. Cache source tarballs ───────────────────────────────────────────
       - name: Restore source tarball cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: SOURCES
           key: >-
             sources-${{ needs.parse-tag.outputs.openssh_ver }}-${{ env.OPENSSL_VER }}-${{ env.ZLIB_VER }}-${{ env.ZIG_VER }}
+          restore-keys: |
+            sources-${{ needs.parse-tag.outputs.openssh_ver }}-${{ env.OPENSSL_VER }}-${{ env.ZLIB_VER }}-
 
-      # ── 3. Install Zig (for running build.zig) ─────────────────────────────
-      - name: Install Zig ${{ env.ZIG_VER }}
-        run: |
-          ZIG_TAR="zig-x86_64-linux-${ZIG_VER}.tar.xz"
-          ZIG_URL="https://ziglang.org/download/${ZIG_VER}/${ZIG_TAR}"
-          if [[ -f "SOURCES/${ZIG_TAR}" ]]; then
-            echo "Using cached Zig tarball from SOURCES/"
-            sudo tar -xJf "SOURCES/${ZIG_TAR}" -C /usr/local/
-          else
-            echo "Downloading Zig ${ZIG_VER}"
-            curl -fsSL --retry 3 "${ZIG_URL}" | sudo tar -xJ -C /usr/local/
-          fi
-          echo "/usr/local/zig-x86_64-linux-${ZIG_VER}" >> "$GITHUB_PATH"
-          /usr/local/zig-x86_64-linux-${ZIG_VER}/zig version
+      # ── 2. Setup build environment (rpm-build + Zig) ───────────────────────
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build-env
+        with:
+          zig-ver: ${{ env.ZIG_VER }}
 
-      # ── 4. Build RPMs ──────────────────────────────────────────────────────
+      # ── 3. Build RPMs ──────────────────────────────────────────────────────
       # zig build rpm implicitly runs `fetch` (idempotent) before building.
       - name: Build RPMs (${{ matrix.arch }})
         run: |
@@ -120,6 +104,10 @@ jobs:
             -Dzig-ver=${{ env.ZIG_VER }} \
             -Darch=${{ matrix.arch }} \
             -Drpm-release=${{ needs.parse-tag.outputs.rpm_release }}
+
+      # ── 4. Verify static linkage ──────────────────────────────────────────
+      - name: Verify RPMs are fully statically linked
+        run: zig build check
 
       # ── 5. Verify RPM count ────────────────────────────────────────────────
       - name: Verify output
@@ -132,7 +120,7 @@ jobs:
 
       # ── 6. Upload arch artifact for the release job ────────────────────────
       - name: Upload RPM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rpms-${{ matrix.arch }}
           path: output/*.rpm
@@ -148,20 +136,20 @@ jobs:
     steps:
       # ── 1. Checkout (for release notes context) ──────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.parse-tag.outputs.tag_name }}
           fetch-depth: 0
 
       # ── 2. Download both arch artifacts ─────────────────────────────────────
       - name: Download x86_64 RPMs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: rpms-x86_64
           path: release-assets/
 
       - name: Download aarch64 RPMs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: rpms-aarch64
           path: release-assets/
