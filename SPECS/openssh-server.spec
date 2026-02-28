@@ -222,14 +222,16 @@ popd
 OPENSSH_SRC="%{_builddir}/openssh-%{openssh_ver}"
 
 install -d %{buildroot}/usr/sbin
+install -d %{buildroot}/usr/libexec/openssh
 install -d %{buildroot}/etc/ssh
 install -d %{buildroot}/usr/lib/systemd/system
 install -d %{buildroot}/var/empty
 install -d %{buildroot}/usr/share/man/man5
 install -d %{buildroot}/usr/share/man/man8
 
-# sshd daemon
+# sshd daemon + session helper (OpenSSH 9.x splits listener and session handler)
 install -p -m 0755 "${OPENSSH_SRC}/sshd"            %{buildroot}/usr/sbin/sshd
+install -p -m 0755 "${OPENSSH_SRC}/sshd-session"    %{buildroot}/usr/libexec/openssh/sshd-session
 
 # sshd configuration (from SOURCES/)
 install -p -m 0600 %{SOURCE11}                       %{buildroot}/etc/ssh/sshd_config
@@ -296,7 +298,8 @@ exit 0
 %check
 echo "=== Static linkage check ==="
 FAIL=0
-for bin in %{buildroot}/usr/sbin/sshd; do
+for bin in %{buildroot}/usr/sbin/sshd \
+           %{buildroot}/usr/libexec/openssh/sshd-session; do
   name="$(basename "${bin}")"
   if ldd "${bin}" 2>&1 | grep -qv "not a dynamic executable"; then
     echo "FAIL (dynamic deps): ${name}"; ldd "${bin}" || true; FAIL=1
@@ -320,6 +323,7 @@ echo "=== All checks passed ==="
 # ══════════════════════════════════════════════════════════════════════════════
 %files
 /usr/sbin/sshd
+/usr/libexec/openssh/sshd-session
 %config(noreplace) %attr(0600, root, root) /etc/ssh/sshd_config
 /usr/lib/systemd/system/sshd.service
 %attr(0711, root, root) /var/empty

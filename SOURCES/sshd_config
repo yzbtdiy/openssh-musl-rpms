@@ -30,9 +30,6 @@ PermitEmptyPasswords no
 ChallengeResponseAuthentication no
 KbdInteractiveAuthentication no
 
-# PAM is not available in this static build
-UsePAM no
-
 # ── Forwarding ─────────────────────────────────────────────────────────────────
 AllowAgentForwarding yes
 AllowTcpForwarding yes
