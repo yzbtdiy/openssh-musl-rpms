@@ -37,10 +37,15 @@ CHECKSUM_FILE="${REPO_ROOT}/SOURCES/checksums.sha256"
 
 # Load committed checksums — overrides placeholders above
 if [[ -f "${CHECKSUM_FILE}" ]]; then
-  while IFS=' ' read -r hash _ filename; do
+  while IFS= read -r line; do
     # Skip blank lines and comments
-    [[ -z "${hash}" || "${hash}" == \#* ]] && continue
-    if [[ -n "${SHA256[${filename}]+x}" ]]; then
+    [[ -z "${line}" || "${line}" == \#* ]] && continue
+    # Format: "hash  filename" (two spaces, sha256sum output)
+    hash="${line%%  *}"
+    filename="${line#*  }"
+    # Only override if this filename is one we expect
+    [[ -z "${filename}" || -z "${hash}" ]] && continue
+    if [[ -n "${SHA256["${filename}"]+x}" ]]; then
       SHA256["${filename}"]="${hash}"
     fi
   done < "${CHECKSUM_FILE}"
