@@ -147,6 +147,33 @@ ldd /usr/sbin/sshd        # 应输出 "not a dynamic executable"
 objdump -p /usr/sbin/sshd | grep GLIBC_   # 应无输出
 ```
 
+## ⚠️ 不支持密码认证
+
+**此包不支持系统密码（`/etc/shadow`）登录，只能使用公钥认证。**
+
+原因：
+- 编译时使用 `--without-pam`，无 PAM 支持
+- OpenSSH 的密码认证有且仅有两条路：**PAM**（需动态链接 libpam）或直接读 `/etc/shadow`（需 root 权限）
+- OpenSSH 10.x 引入进程拆分后，认证阶段（`sshd-auth`）以非特权用户运行，无法读取 `/etc/shadow`
+- 因此密码认证**在设计上无法工作**，没有配置可以绕过
+
+### 配置公钥认证
+
+```bash
+# 1. 在客户端生成密钥对（如已有可跳过）
+ssh-keygen -t ed25519
+
+# 2. 将公钥追加到服务端
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+echo "ssh-ed25519 AAAA...公钥内容..." >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# 3. 登录
+ssh -i ~/.ssh/id_ed25519 user@host
+```
+
+> 如果需要密码登录，请使用发行版自带的动态链接版 openssh（如 `yum install openssh-server`）。
+
 ## CI / 发布
 
 - **`build.yml`** — 每次 push / PR 触发，构建 x86_64 和 aarch64，将 RPM 作为构建产物上传（保留 7 天）。
