@@ -14,8 +14,8 @@ concurrency:
 
 # ── Version pins ──────────────────────────────────────────────────────────────
 env:
-  OPENSSH_VER: "9.9p2"
-  OPENSSL_VER: "3.5.0"
+  OPENSSH_VER: "10.2p1"
+  OPENSSL_VER: "3.6.1"
   ZLIB_VER:    "1.3.2"
   ZIG_VER:     "0.15.2"
   RPM_RELEASE: "0"   # pre-release build; official releases use release.yml

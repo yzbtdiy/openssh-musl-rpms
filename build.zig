@@ -27,8 +27,8 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     // ── Version options ────────────────────────────────────────────────────────
-    const openssh_ver  = b.option([]const u8, "openssh-ver",   "OpenSSH version")                            orelse "9.9p2";
-    const openssl_ver  = b.option([]const u8, "openssl-ver",   "OpenSSL version")                            orelse "3.5.0";
+    const openssh_ver  = b.option([]const u8, "openssh-ver",   "OpenSSH version")                            orelse "10.2p1";
+    const openssl_ver  = b.option([]const u8, "openssl-ver",   "OpenSSL version")                            orelse "3.6.1";
     const zlib_ver     = b.option([]const u8, "zlib-ver",      "zlib version")                               orelse "1.3.2";
     const zig_ver      = b.option([]const u8, "zig-ver",       "Zig toolchain version (used in RPM spec)")   orelse "0.15.2";
     const rpm_release  = b.option([]const u8, "rpm-release",   "RPM release number")                         orelse "1";

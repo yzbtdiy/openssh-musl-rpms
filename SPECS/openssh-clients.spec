@@ -11,8 +11,8 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Version globals (overridable via --define) ─────────────────────────────────
-%global openssh_ver  %{?_openssh_ver}%{!?_openssh_ver:9.9p2}
-%global openssl_ver  %{?_openssl_ver}%{!?_openssl_ver:3.5.0}
+%global openssh_ver  %{?_openssh_ver}%{!?_openssh_ver:10.2p1}
+%global openssl_ver  %{?_openssl_ver}%{!?_openssl_ver:3.6.1}
 %global zlib_ver     %{?_zlib_ver}%{!?_zlib_ver:1.3.2}
 %global zig_ver      %{?_zig_ver}%{!?_zig_ver:0.15.2}
 
@@ -279,9 +279,12 @@ echo "=== All checks passed ==="
 
 # ══════════════════════════════════════════════════════════════════════════════
 %changelog
+* Sat Feb 28 2026 Build System <openssh-rpms@github.com> - 10.2p1-1
+- Upgrade to OpenSSH 10.2p1 and OpenSSL 3.6.1
+- No glibc version-symbol dependencies
+- Supports x86_64 and aarch64 (cross-compiled on x86_64 host via zig cc)
+
 * Thu Feb 26 2026 Build System <openssh-rpms@github.com> - 9.9p2-1
 - Initial static musl build using Zig 0.15.2
 - Bundled: OpenSSL 3.5.0, zlib 1.3.1
 - PAM, GSSAPI, SELinux, Kerberos support disabled
-- No glibc version-symbol dependencies
-- Supports x86_64 and aarch64 (cross-compiled on x86_64 host via zig cc)

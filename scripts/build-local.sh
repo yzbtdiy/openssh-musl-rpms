@@ -11,8 +11,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
 # ─── Version Pins ─────────────────────────────────────────────────────────────
-OPENSSH_VER="${OPENSSH_VER:-9.9p2}"
-OPENSSL_VER="${OPENSSL_VER:-3.5.0}"
+OPENSSH_VER="${OPENSSH_VER:-10.2p1}"
+OPENSSL_VER="${OPENSSL_VER:-3.6.1}"
 ZLIB_VER="${ZLIB_VER:-1.3.2}"
 ZIG_VER="${ZIG_VER:-0.15.2}"
 RPM_RELEASE="${RPM_RELEASE:-1}"

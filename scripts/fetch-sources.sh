@@ -9,8 +9,8 @@ SOURCES="${REPO_ROOT}/SOURCES"
 mkdir -p "${SOURCES}"
 
 # ─── Version Pins ────────────────────────────────────────────────────────────
-OPENSSH_VER="${OPENSSH_VER:-9.9p2}"
-OPENSSL_VER="${OPENSSL_VER:-3.5.0}"
+OPENSSH_VER="${OPENSSH_VER:-10.2p1}"
+OPENSSL_VER="${OPENSSL_VER:-3.6.1}"
 ZLIB_VER="${ZLIB_VER:-1.3.2}"
 ZIG_VER="${ZIG_VER:-0.15.2}"
 
