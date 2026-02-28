@@ -229,9 +229,10 @@ install -d %{buildroot}/var/empty
 install -d %{buildroot}/usr/share/man/man5
 install -d %{buildroot}/usr/share/man/man8
 
-# sshd daemon + session helper (OpenSSH 9.x splits listener and session handler)
+# sshd daemon + session/auth helpers (OpenSSH 10.x splits into three processes)
 install -p -m 0755 "${OPENSSH_SRC}/sshd"            %{buildroot}/usr/sbin/sshd
 install -p -m 0755 "${OPENSSH_SRC}/sshd-session"    %{buildroot}/usr/libexec/openssh/sshd-session
+install -p -m 0755 "${OPENSSH_SRC}/sshd-auth"       %{buildroot}/usr/libexec/openssh/sshd-auth
 
 # sshd configuration (from SOURCES/)
 install -p -m 0600 %{SOURCE11}                       %{buildroot}/etc/ssh/sshd_config
@@ -260,17 +261,15 @@ getent passwd sshd &>/dev/null || \
 exit 0
 
 %post
-# On first install: generate host keys if not present
-if [[ $1 -eq 1 ]]; then
-  for type in rsa ecdsa ed25519; do
-    keyfile="/etc/ssh/ssh_host_${type}_key"
-    if [[ ! -f "${keyfile}" ]]; then
-      /usr/bin/ssh-keygen -q -t "${type}" -f "${keyfile}" -N ""
-      chmod 0600 "${keyfile}"
-      chmod 0644 "${keyfile}.pub"
-    fi
-  done
-fi
+# Generate host keys if not present (runs on both install and upgrade)
+for type in rsa ecdsa ed25519; do
+  keyfile="/etc/ssh/ssh_host_${type}_key"
+  if [[ ! -f "${keyfile}" ]]; then
+    /usr/bin/ssh-keygen -q -t "${type}" -f "${keyfile}" -N ""
+    chmod 0600 "${keyfile}"
+    chmod 0644 "${keyfile}.pub"
+  fi
+done
 # Reload systemd unit database
 if command -v systemctl &>/dev/null && systemctl is-system-running --quiet 2>/dev/null; then
   systemctl daemon-reload || true
@@ -299,7 +298,8 @@ exit 0
 echo "=== Static linkage check ==="
 FAIL=0
 for bin in %{buildroot}/usr/sbin/sshd \
-           %{buildroot}/usr/libexec/openssh/sshd-session; do
+           %{buildroot}/usr/libexec/openssh/sshd-session \
+           %{buildroot}/usr/libexec/openssh/sshd-auth; do
   name="$(basename "${bin}")"
   if ldd "${bin}" 2>&1 | grep -qv "not a dynamic executable"; then
     echo "FAIL (dynamic deps): ${name}"; ldd "${bin}" || true; FAIL=1
@@ -324,6 +324,7 @@ echo "=== All checks passed ==="
 %files
 /usr/sbin/sshd
 /usr/libexec/openssh/sshd-session
+/usr/libexec/openssh/sshd-auth
 %config(noreplace) %attr(0600, root, root) /etc/ssh/sshd_config
 /usr/lib/systemd/system/sshd.service
 %attr(0711, root, root) /var/empty

@@ -8,14 +8,14 @@
 |------|------|
 | `openssh` | ssh-keygen、ssh-keyscan、sftp-server、ssh-keysign、moduli |
 | `openssh-clients` | ssh、scp、sftp、ssh-add、ssh-agent |
-| `openssh-server` | sshd、sshd.service、sshd_config |
+| `openssh-server` | sshd、sshd-session、sshd-auth、sshd.service、sshd_config |
 
 ## 默认版本
 
 | 组件 | 版本 |
 |------|------|
-| OpenSSH | 9.9p2 |
-| OpenSSL | 3.5.0 |
+| OpenSSH | 10.2p1 |
+| OpenSSL | 3.6.1 |
 | zlib    | 1.3.2 |
 | Zig     | 0.15.2 |
 
@@ -72,8 +72,8 @@ ls output/*.rpm
 
 | 选项 | 默认值 | 说明 |
 |------|--------|------|
-| `-Dopenssh-ver` | `9.9p2` | OpenSSH 版本 |
-| `-Dopenssl-ver` | `3.5.0` | OpenSSL 版本 |
+| `-Dopenssh-ver` | `10.2p1` | OpenSSH 版本 |
+| `-Dopenssl-ver` | `3.6.1` | OpenSSL 版本 |
 | `-Dzlib-ver` | `1.3.2` | zlib 版本 |
 | `-Dzig-ver` | `0.15.2` | Zig 工具链版本（写入 RPM spec） |
 | `-Drpm-release` | `1` | RPM release 编号 |
@@ -91,8 +91,8 @@ zig build rpm -Darch=all
 
 ```bash
 zig build rpm \
-  -Dopenssh-ver=9.9p2 \
-  -Dopenssl-ver=3.5.0 \
+  -Dopenssh-ver=10.2p1 \
+  -Dopenssl-ver=3.6.1 \
   -Dzlib-ver=1.3.2 \
   -Dzig-ver=0.15.2 \
   -Darch=all \
@@ -115,8 +115,8 @@ zig build docker -Ddocker-image=rockylinux:9
 
 ```bash
 rpmbuild -bb --target x86_64 SPECS/openssh.spec \
-  --define "openssh_ver 9.9p2" \
-  --define "openssl_ver 3.5.0" \
+  --define "openssh_ver 10.2p1" \
+  --define "openssl_ver 3.6.1" \
   --define "zlib_ver 1.3.2" \
   --define "zig_ver 0.15.2"
 ```
@@ -125,13 +125,13 @@ rpmbuild -bb --target x86_64 SPECS/openssh.spec \
 
 ```bash
 # 服务端（x86_64 示例）
-rpm -ivh openssh-9.9p2-1.x86_64.rpm \
-         openssh-server-9.9p2-1.x86_64.rpm
+rpm -ivh openssh-10.2p1-1.x86_64.rpm \
+         openssh-server-10.2p1-1.x86_64.rpm
 systemctl enable --now sshd
 
 # 仅客户端
-rpm -ivh openssh-9.9p2-1.x86_64.rpm \
-         openssh-clients-9.9p2-1.x86_64.rpm
+rpm -ivh openssh-10.2p1-1.x86_64.rpm \
+         openssh-clients-10.2p1-1.x86_64.rpm
 ```
 
 ## 验证静态链接
@@ -150,12 +150,12 @@ objdump -p /usr/sbin/sshd | grep GLIBC_   # 应无输出
 ## CI / 发布
 
 - **`build.yml`** — 每次 push / PR 触发，构建 x86_64 和 aarch64，将 RPM 作为构建产物上传（保留 7 天）。
-- **`release.yml`** — 推送符合 `v{openssh_ver}-{rpm_release}` 格式的标签（如 `v9.9p2-1`）时触发，将 6 个 RPM 和 `SHA256SUMS.txt` 发布到 GitHub Releases。
+- **`release.yml`** — 推送符合 `v{openssh_ver}-{rpm_release}` 格式的标签（如 `v10.2p1-1`）时触发，将 6 个 RPM 和 `SHA256SUMS.txt` 发布到 GitHub Releases。
 
 ```bash
 # 创建发布
-git tag v9.9p2-1
-git push origin v9.9p2-1
+git tag v10.2p1-1
+git push origin v10.2p1-1
 ```
 
 ## 仓库结构
